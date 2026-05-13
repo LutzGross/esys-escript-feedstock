@@ -22,6 +22,19 @@ export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
 # Source layout changed in 6.x: single tarball (no separate netcdf-cxx4
 # folder), so build from ${SRC_DIR} directly rather than ${SRC_DIR}/escript.
 cd ${SRC_DIR}
+
+# conda-forge ships umfpack.h under include/suitesparse/, but scons
+# findLibWithHeader only handles include/<header> when given a string prefix.
+# SCons CLI args are strings, so set the [include, lib] list in the options
+# file instead.
+cat >> ${SRC_DIR}/scons/templates/anaconda_options.py <<EOF
+
+import os as _os
+umfpack_prefix = [_os.path.join('${PREFIX}', 'include', 'suitesparse'),
+                  _os.path.join('${PREFIX}', 'lib')]
+del _os
+EOF
+
 scons -j"${CPU_COUNT}" \
     options_file="${SRC_DIR}/scons/templates/anaconda_options.py" \
     build_dir=${BUILD_PREFIX}/escript_build \
@@ -43,8 +56,7 @@ scons -j"${CPU_COUNT}" \
     trilinos=0 \
     build_trilinos=never \
     trilinos_src=${SRC_DIR} \
-    umfpack=0 \
-    umfpack_prefix=${PREFIX} \
+    umfpack=1 \
     build_full || cat config.log
 
 ln -s ${PREFIX}/lib/buildvars ${PREFIX}/lib/buildvars.in
