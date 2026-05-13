@@ -1,20 +1,15 @@
-{% set version = "5.10" %}
+{% set version = "6.1.0" %}
 
 package:
     name: esys-escript
     version: {{ version }}
 source:
-    - url: https://github.com/Unidata/netcdf-cxx4/archive/v4.3.1.tar.gz
-      sha256: e3fe3d2ec06c1c2772555bf1208d220aab5fee186d04bd265219b0bc7a978edc
-      folder: netcdf-cxx4
-      patches: netcdf-cxx4.patch
-    - url: https://github.com/esys-escript/esys-escript.github.io/archive/refs/tags/5.10pre.tar.gz
-      sha256: ed7612e540bb6ddb8d266e1a0515fdb56ce8f6480db44435c86f3d6d0fa36d53
-      folder: escript
+    url: https://github.com/LutzGross/esys-escript.github.io/archive/refs/tags/{{ version }}.tar.gz
+    sha256: fe2661e883e8f9e0dc12af675eb83e64abacc6039ab87b534d3630204778006e
 build:
     skip: True  # [osx]
     skip: True  # [win]
-    number: 5
+    number: 0
 requirements:
     build:
         - {{ compiler('cxx') }}
@@ -37,7 +32,7 @@ requirements:
         - hdf5
         - libopenblas  # [linux]
         - llvm-openmp
-        - pyproj 
+        - pyproj
         - scipy
         - sympy
         - suitesparse  # [linux]
@@ -58,22 +53,21 @@ test:
         - run-escript /tmp/release_sanity.py  # [linux]
         - run-escript %TEMP%/release_sanity.py  # [win]
 about:
-    home: https://launchpad.net/escript-finley
-    summary: esys-escript is a programming tool for implementing mathematical 
+    home: https://github.com/LutzGross/esys-escript.github.io
+    summary: esys-escript is a programming tool for implementing mathematical
         models in python using the finite element method (FEM).
     license: Apache-2.0
     license_file: LICENSE
-    description: esys-escript is a programming tool for implementing 
-        mathematical models in python using the finite element method (FEM). 
-        As users do not access the data structures it is very easy to use and 
+    description: esys-escript is a programming tool for implementing
+        mathematical models in python using the finite element method (FEM).
+        As users do not access the data structures it is very easy to use and
         scripts can run on desktop computers as well as highly parallel
-        supercomputer without changes. Application areas for escript include 
-        earth mantle convection, geophysical inversion, earthquakes, 
-        porous media flow, reactive transport, plate subduction, erosion, 
+        supercomputer without changes. Application areas for escript include
+        earth mantle convection, geophysical inversion, earthquakes,
+        porous media flow, reactive transport, plate subduction, erosion,
         and tsunamis.
-    dev_url: https://launchpad.net/escript-finley
-    doc_url: https://launchpad.net/escript-finley
-    doc_source_url: https://launchpad.net/escript-finley
+    dev_url: https://github.com/LutzGross/esys-escript.github.io
+    doc_url: https://lutzgross.github.io/esys-escript.github.io/
 
 extra:
     recipe-maintainers:
