@@ -57,7 +57,7 @@ scons -j"${CPU_COUNT}" \
     openmp=0 \
     omp_flags="-fopenmp" \
     paso=1 \
-    prefix=${PREFIX} \
+    PREFIX=${PREFIX} \
     pythoncmd=${PREFIX}/bin/python \
     pythonlibpath=${PYTHON_LIB_PATH} \
     pythonincpath=${PYTHON_INC_PATH} \
