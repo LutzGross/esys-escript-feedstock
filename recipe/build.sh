@@ -42,6 +42,7 @@ scons -j"${CPU_COUNT}" \
     silo=${BUILD_SILO} \
     silo_prefix=${PREFIX} \
     trilinos=0 \
+    build_trilinos=never \
     trilinos_src=${SRC_DIR} \
     umfpack=0 \
     umfpack_prefix=${PREFIX} \
