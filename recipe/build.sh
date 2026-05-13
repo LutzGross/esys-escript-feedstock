@@ -35,6 +35,12 @@ umfpack_prefix = [_os.path.join('${PREFIX}', 'include', 'suitesparse'),
 del _os
 EOF
 
+# dependencies.py hard-codes a Windows-style 'Lib/' path when CONDA_PREFIX is
+# set, which fails on Linux. Patch it to use numpy.get_include() instead.
+NUMPY_INC=$(${PREFIX}/bin/python -c 'import numpy; print(numpy.get_include())')
+sed -i "s|conda_prefix+'/Lib/site-packages/numpy/core/include'|'${NUMPY_INC}'|" \
+    ${SRC_DIR}/site_scons/dependencies.py
+
 scons -j"${CPU_COUNT}" \
     options_file="${SRC_DIR}/scons/templates/anaconda_options.py" \
     build_dir=${BUILD_PREFIX}/escript_build \
@@ -42,6 +48,7 @@ scons -j"${CPU_COUNT}" \
     boost_libs=${BOOST_LIBS} \
     cxx=${CXX} \
     cppunit_prefix=${PREFIX} \
+    hdf5_prefix=${PREFIX} \
     ld_extra="-L${PREFIX}/lib -lgomp" \
     openmp=0 \
     omp_flags="-fopenmp" \
