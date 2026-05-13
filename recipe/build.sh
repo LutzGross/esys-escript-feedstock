@@ -33,6 +33,10 @@ import os as _os
 umfpack_prefix = [_os.path.join('${PREFIX}', 'include', 'suitesparse'),
                   _os.path.join('${PREFIX}', 'lib')]
 del _os
+
+# hdf5_libs defaults to the literal string 'DEFAULT' which the build then
+# tries to -lDEFAULT. Set the real conda-forge lib names.
+hdf5_libs = ['hdf5_cpp', 'hdf5']
 EOF
 
 # dependencies.py hard-codes a Windows-style 'Lib/' path when CONDA_PREFIX is
