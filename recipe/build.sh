@@ -6,6 +6,13 @@ set -o pipefail
 CFLAGS="${CFLAGS} -I${PREFIX}/include -fPIC"
 CXXFLAGS="${CXXFLAGS} -fPIC -w -fopenmp"
 
+# OpenMP runtime: GNU libgomp on Linux, LLVM libomp on macOS.
+if [[ "$(uname)" == "Darwin" ]]; then
+    OMP_LIB="omp"
+else
+    OMP_LIB="gomp"
+fi
+
 BOOST_LIBS="boost_python${CONDA_PY}"
 PYTHON_LIB_PATH="${PREFIX}/lib"
 PYTHON_INC_PATH="${PREFIX}/include/python${PY_VER}"
@@ -53,7 +60,7 @@ scons -j"${CPU_COUNT}" \
     cxx=${CXX} \
     cppunit_prefix=${PREFIX} \
     hdf5_prefix=${PREFIX} \
-    ld_extra="-L${PREFIX}/lib -lgomp" \
+    ld_extra="-L${PREFIX}/lib -l${OMP_LIB}" \
     openmp=0 \
     omp_flags="-fopenmp" \
     paso=1 \

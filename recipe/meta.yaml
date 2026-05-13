@@ -7,8 +7,6 @@ source:
     url: https://github.com/LutzGross/esys-escript.github.io/archive/refs/tags/{{ version }}.tar.gz
     sha256: fe2661e883e8f9e0dc12af675eb83e64abacc6039ab87b534d3630204778006e
 build:
-    skip: True  # [osx]
-    skip: True  # [win]
     number: 0
 requirements:
     build:
@@ -30,12 +28,12 @@ requirements:
         - setuptools
         - matplotlib-base
         - hdf5
-        - libopenblas  # [linux]
+        - libopenblas  # [unix]
         - llvm-openmp
         - pyproj
         - scipy
         - sympy
-        - suitesparse  # [linux]
+        - suitesparse  # [unix]
         - gmsh  # [win]
     run:
         - python
