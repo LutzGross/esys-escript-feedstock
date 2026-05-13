@@ -47,10 +47,18 @@ hdf5_libs = ['hdf5_cpp', 'hdf5']
 EOF
 
 # dependencies.py hard-codes a Windows-style 'Lib/' path when CONDA_PREFIX is
-# set, which fails on Linux. Patch it to use numpy.get_include() instead.
-NUMPY_INC=$(${PREFIX}/bin/python -c 'import numpy; print(numpy.get_include())')
-sed -i "s|conda_prefix+'/Lib/site-packages/numpy/core/include'|'${NUMPY_INC}'|" \
-    ${SRC_DIR}/site_scons/dependencies.py
+# set, which fails on Linux/macOS. Patch it to use numpy.get_include() instead.
+# (Avoid `sed -i` — flag semantics differ between GNU and BSD sed.)
+${PREFIX}/bin/python - <<PYEOF
+path = "${SRC_DIR}/site_scons/dependencies.py"
+import numpy
+new = repr(numpy.get_include())
+with open(path) as f:
+    text = f.read()
+text = text.replace("conda_prefix+'/Lib/site-packages/numpy/core/include'", new)
+with open(path, "w") as f:
+    f.write(text)
+PYEOF
 
 scons -j"${CPU_COUNT}" \
     options_file="${SRC_DIR}/scons/templates/anaconda_options.py" \
