@@ -28,7 +28,6 @@ scons -j"${CPU_COUNT}" \
     boost_prefix=${PREFIX} \
     boost_libs=${BOOST_LIBS} \
     cxx=${CXX} \
-    cxx_extra="-w -fPIC -fdiagnostics-color=always -std=c++17 --verbose" \
     cppunit_prefix=${PREFIX} \
     ld_extra="-L${PREFIX}/lib -lgomp" \
     openmp=0 \
