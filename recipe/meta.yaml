@@ -5,7 +5,7 @@ package:
     version: {{ version }}
 source:
     url: https://github.com/LutzGross/esys-escript.github.io/archive/refs/tags/{{ version }}.tar.gz
-    sha256: 866ca90f396c81f76571610859ee1d6da59638214f38d3f6139311b8c255d4b9
+    sha256: 2ffb246b00c68f61de4f21bf918e14334acdc4e46263a47bc24313d17fc67926
 build:
     number: 0
 requirements:
