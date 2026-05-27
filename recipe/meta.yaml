@@ -11,6 +11,7 @@ source:
         - 0002-openmp-signed-loop-counters.patch
         - 0003-uint-to-unsigned-int.patch
         - 0004-and-to-andand.patch
+        - 0005-explicit-complex-template-arg.patch
 build:
     number: 0
 requirements:

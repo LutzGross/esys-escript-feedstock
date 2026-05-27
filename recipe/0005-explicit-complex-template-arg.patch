@@ -1,0 +1,31 @@
+From d6464710caead849d243c4c3242670a9c30a99df Mon Sep 17 00:00:00 2001
+From: Lutz Gross <lutz.gross@gmail.com>
+Date: Wed, 27 May 2026 18:05:52 +0200
+Subject: [PATCH] Specify std::complex<double> explicitly
+
+CTAD on std::complex is forbidden by the standard (only the float,
+double, long double specializations are valid). GCC/Clang accept
+std::complex(0.0, 1.0) leniently; MSVC enforces the rule and rejects
+it with C2955. Spell the template argument out.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+---
+ escriptcore/src/DataFactory.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/escriptcore/src/DataFactory.cpp b/escriptcore/src/DataFactory.cpp
+index e0f2a690d..eb1fe5819 100644
+--- a/escriptcore/src/DataFactory.cpp
++++ b/escriptcore/src/DataFactory.cpp
+@@ -648,7 +648,7 @@ Data load_hdf5(const std::string fileName, const AbstractDomain& domain)
+     {
+             Data data_re = load_hdf5grp(h5_file.openGroup("Data_Re"), domain);
+             Data data_im = load_hdf5grp(h5_file.openGroup("Data_Im"), domain);
+-            return data_re +  data_im * Scalar(std::complex(0.0, 1.0), data_im.getFunctionSpace(), false );
++            return data_re +  data_im * Scalar(std::complex<double>(0.0, 1.0), data_im.getFunctionSpace(), false );
+     }
+     else
+     {
+-- 
+2.43.0
+
