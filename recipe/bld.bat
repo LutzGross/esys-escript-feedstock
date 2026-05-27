@@ -23,7 +23,7 @@ set PYVER=%PY_VER:.=%
     echo verbose = 0
     echo compressed_files = 0
     echo cc_flags = '/EHsc /MD /DBOOST_ALL_NO_LIB /wd4068 /DH5_BUILT_AS_DYNAMIC_LIB'
-    echo omp_flags = '/openmp'
+    echo omp_flags = '/openmp:llvm'
     echo tools_names = ['msvc']
     echo hdf5 = 1
     echo hdf5_libs = ['hdf5_cpp', 'hdf5']
