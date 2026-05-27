@@ -9,6 +9,7 @@ source:
     patches:
         - 0001-anaconda-options-drop-import-os.patch
         - 0002-openmp-signed-loop-counters.patch
+        - 0003-uint-to-unsigned-int.patch
 build:
     number: 0
 requirements:

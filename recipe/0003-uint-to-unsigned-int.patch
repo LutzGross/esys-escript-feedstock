@@ -1,0 +1,230 @@
+From 507131d94674cf22221db3bcf1147dad65c260e3 Mon Sep 17 00:00:00 2001
+From: Lutz Gross <lutz.gross@gmail.com>
+Date: Wed, 27 May 2026 17:43:57 +0200
+Subject: [PATCH] Use standard `unsigned int` instead of POSIX `uint`
+
+The bare `uint` type is a POSIX/glibc extension exposed through
+<sys/types.h>, not a standard C++ type. MSVC does not define it, so the
+Windows build fails with C2065 ("'uint': undeclared identifier").
+Replace with the standard `unsigned int`.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+---
+ escriptcore/src/DataConstant.cpp | 8 ++++----
+ escriptcore/src/DataExpanded.cpp | 8 ++++----
+ escriptcore/src/DataFactory.cpp  | 6 +++---
+ escriptcore/src/DataTagged.cpp   | 8 ++++----
+ finley/src/DomainFactory.cpp     | 6 +++---
+ finley/src/ElementFile.cpp       | 6 +++---
+ finley/src/FinleyDomain.cpp      | 6 +++---
+ 7 files changed, 24 insertions(+), 24 deletions(-)
+
+diff --git a/escriptcore/src/DataConstant.cpp b/escriptcore/src/DataConstant.cpp
+index 6853e0ec5..e5032eae5 100644
+--- a/escriptcore/src/DataConstant.cpp
++++ b/escriptcore/src/DataConstant.cpp
+@@ -602,7 +602,7 @@ DataConstant::setToZero()
+ #ifdef ESYS_HAVE_HDF5
+ void DataConstant::dump_hdf5(const H5::Group h5_grp) const
+ {
+-    uint rank = getRank();
++    unsigned int rank = getRank();
+     int fs_type=  getFunctionSpace().getTypeCode();
+     const DataTypes::ShapeType& shape = getShape();
+     if (isComplex())
+@@ -624,8 +624,8 @@ void DataConstant::dump_hdf5(const H5::Group h5_grp) const
+     try
+     {
+         // .... add meta data ............
+-        uint h5_shape[DataTypes::maxRank]; // dataset dimensions
+-        for (uint i = 0; i < rank; i++) {
++        unsigned int h5_shape[DataTypes::maxRank]; // dataset dimensions
++        for (unsigned int i = 0; i < rank; i++) {
+             h5_shape[i]= shape[i];
+         }
+         hsize_t h5_shape_dims[1] = {rank};
+@@ -637,7 +637,7 @@ void DataConstant::dump_hdf5(const H5::Group h5_grp) const
+         H5::Attribute h5_typeid_attr = h5_dmeta.createAttribute("type_id", H5::PredType::NATIVE_INT, H5::DataSpace(1,h5_typeid_dims ) );
+         h5_typeid_attr.write( H5::PredType::NATIVE_INT , h5_type_id );
+ 
+-        uint h5_rank[1] = { static_cast<uint>(rank) };
++        unsigned int h5_rank[1] = { static_cast<unsigned int>(rank) };
+         H5::Attribute h5_rank_attr = h5_dmeta.createAttribute("rank", H5::PredType::NATIVE_UINT, H5::DataSpace(1, h5_typeid_dims ) );
+         h5_rank_attr.write( H5::PredType::NATIVE_UINT , h5_rank );
+ 
+diff --git a/escriptcore/src/DataExpanded.cpp b/escriptcore/src/DataExpanded.cpp
+index 378ad1c35..ee2d2b5c0 100644
+--- a/escriptcore/src/DataExpanded.cpp
++++ b/escriptcore/src/DataExpanded.cpp
+@@ -1179,7 +1179,7 @@ void DataExpanded::setToZero()
+ #ifdef ESYS_HAVE_HDF5
+ void DataExpanded::dump_hdf5(const H5::Group h5_grp) const
+ {
+-    uint rank = getRank();
++    unsigned int rank = getRank();
+     int fs_type=  getFunctionSpace().getTypeCode();
+     const DataTypes::ShapeType& shape = getShape();
+     const dim_t* ids_p=getFunctionSpace().borrowSampleReferenceIDs();
+@@ -1202,8 +1202,8 @@ void DataExpanded::dump_hdf5(const H5::Group h5_grp) const
+     try
+     {
+         // .... add meta data ............
+-        uint h5_shape[DataTypes::maxRank]; // dataset dimensions
+-        for (uint i = 0; i < rank; i++) {
++        unsigned int h5_shape[DataTypes::maxRank]; // dataset dimensions
++        for (unsigned int i = 0; i < rank; i++) {
+             h5_shape[i]= shape[i];
+         }
+         hsize_t h5_shape_dims[1] = {static_cast<hsize_t>(rank)};
+@@ -1215,7 +1215,7 @@ void DataExpanded::dump_hdf5(const H5::Group h5_grp) const
+         H5::Attribute h5_typeid_attr = h5_dmeta.createAttribute("type_id", H5::PredType::NATIVE_INT, H5::DataSpace(1,h5_typeid_dims ) );
+         h5_typeid_attr.write( H5::PredType::NATIVE_INT , h5_type_id );
+ 
+-        uint h5_rank[1] = { static_cast<uint>(rank) };
++        unsigned int h5_rank[1] = { static_cast<unsigned int>(rank) };
+         H5::Attribute h5_rank_attr = h5_dmeta.createAttribute("rank", H5::PredType::NATIVE_UINT, H5::DataSpace(1,h5_typeid_dims ) );
+         h5_rank_attr.write( H5::PredType::NATIVE_UINT , h5_rank );
+ 
+diff --git a/escriptcore/src/DataFactory.cpp b/escriptcore/src/DataFactory.cpp
+index cba7265ad..19c7c9b9b 100644
+--- a/escriptcore/src/DataFactory.cpp
++++ b/escriptcore/src/DataFactory.cpp
+@@ -436,10 +436,10 @@ Data load_hdf5grp(const H5::Group h5_grp, const AbstractDomain& domain)
+     JMPI mpiInfo(domain.getMPI());
+     /* .. read meta data ... */
+     try {
+-            uint rank = 0;
++            unsigned int rank = 0;
+             int type=-1;
+             int function_space_type=-1;
+-            uint h5_shape[DataTypes::maxRank];
++            unsigned int h5_shape[DataTypes::maxRank];
+ 
+             // .... read meta data ...
+             H5::DataSet h5_meta_data=h5_grp.openDataSet("Meta");
+@@ -485,7 +485,7 @@ Data load_hdf5grp(const H5::Group h5_grp, const AbstractDomain& domain)
+             shape.resize(rank);
+             h5_meta_data.read(&h5_shape, h5_type_shape);
+             int num_values_per_data_point = 1;
+-            for (uint i=0; i < rank; ++i) {
++            for (unsigned int i=0; i < rank; ++i) {
+                 shape[i] = h5_shape[i];
+                 num_values_per_data_point*=shape[i];
+             }
+diff --git a/escriptcore/src/DataTagged.cpp b/escriptcore/src/DataTagged.cpp
+index 4afe5d0a4..03e852c3b 100644
+--- a/escriptcore/src/DataTagged.cpp
++++ b/escriptcore/src/DataTagged.cpp
+@@ -1393,7 +1393,7 @@ DataTagged::setToZero(){
+ #ifdef ESYS_HAVE_HDF5
+ void DataTagged::dump_hdf5(const H5::Group h5_grp) const
+ {
+-    uint rank = getRank();
++    unsigned int rank = getRank();
+     int fs_type=  getFunctionSpace().getTypeCode();
+     const DataTypes::ShapeType& shape = getShape();
+     if (isComplex())
+@@ -1416,8 +1416,8 @@ void DataTagged::dump_hdf5(const H5::Group h5_grp) const
+     try
+     {
+         // .... add meta data ............
+-        uint h5_shape[DataTypes::maxRank]; // dataset dimensions
+-        for (uint i = 0; i < rank; i++) {
++        unsigned int h5_shape[DataTypes::maxRank]; // dataset dimensions
++        for (unsigned int i = 0; i < rank; i++) {
+             h5_shape[i]= shape[i];
+         }
+         hsize_t h5_shape_dims[1] = {rank};
+@@ -1429,7 +1429,7 @@ void DataTagged::dump_hdf5(const H5::Group h5_grp) const
+         H5::Attribute h5_typeid_attr = h5_dmeta.createAttribute("type_id", H5::PredType::NATIVE_INT, H5::DataSpace(1,h5_typeid_dims ) );
+         h5_typeid_attr.write( H5::PredType::NATIVE_INT , h5_type_id );
+ 
+-        uint h5_rank[1] = { rank };
++        unsigned int h5_rank[1] = { rank };
+         H5::Attribute h5_rank_attr = h5_dmeta.createAttribute("rank", H5::PredType::NATIVE_UINT, H5::DataSpace(1,h5_typeid_dims ) );
+         h5_rank_attr.write( H5::PredType::NATIVE_UINT , h5_rank );
+ 
+diff --git a/finley/src/DomainFactory.cpp b/finley/src/DomainFactory.cpp
+index 741274a3d..e1f9d45a0 100644
+--- a/finley/src/DomainFactory.cpp
++++ b/finley/src/DomainFactory.cpp
+@@ -81,7 +81,7 @@ Domain_ptr FinleyDomain::load(const string& fileName, const bp::object& comm)
+ 
+             H5::Group h5_grp_nodes = h5_file.openGroup("Nodes");
+             // ... retrieve dimension ....
+-            uint h5_numDim;
++            unsigned int h5_numDim;
+             H5::Attribute h5_attr_dim(h5_grp_nodes.openAttribute("numDim"));
+             H5::DataType h5_type_dim(h5_attr_dim.getDataType());
+             if (  h5_type_dim != H5::PredType::NATIVE_UINT  ) {
+@@ -211,7 +211,7 @@ Domain_ptr FinleyDomain::load(const string& fileName, const bp::object& comm)
+             // .... end read elements
+             // ...  read tag map ..... :
+             H5::Group h5_grp_tags=h5_file.openGroup("Tags");
+-            uint num_Tags=0;
++            unsigned int num_Tags=0;
+             H5::Attribute h5_attr_ntags(h5_grp_tags.openAttribute("numTags"));
+             H5::DataType h5_type_ntags(h5_attr_ntags.getDataType());
+             if (  h5_type_ntags != H5::PredType::NATIVE_UINT  ) {
+@@ -243,7 +243,7 @@ Domain_ptr FinleyDomain::load(const string& fileName, const bp::object& comm)
+            }
+            h5_ds_tagnames.read(&Tag_names[0], h5_type_tagnames);
+ 
+-            for (uint i = 0; i < num_Tags; i++) {
++            for (unsigned int i = 0; i < num_Tags; i++) {
+                 dom->setTagMap(Tag_names[i], Tag_keys[i]);
+             }
+             // ... node & DOF distributions:
+diff --git a/finley/src/ElementFile.cpp b/finley/src/ElementFile.cpp
+index 826249ae5..94b04bc7e 100644
+--- a/finley/src/ElementFile.cpp
++++ b/finley/src/ElementFile.cpp
+@@ -488,8 +488,8 @@ void ElementFile::dump(H5::Group h5_grp) const
+         H5::DataType h5_type_index = H5::PredType::NATIVE_INT;
+     #endif
+     hsize_t h5_dims_numElements[1] = { 1 };
+-    uint h5_values_numElements[1] = { static_cast<uint>(numElements) };
+-    uint h5_values_numNodes[1] = { static_cast<uint>(numNodes) };
++    unsigned int h5_values_numElements[1] = { static_cast<unsigned int>(numElements) };
++    unsigned int h5_values_numNodes[1] = { static_cast<unsigned int>(numNodes) };
+     int h5_values_typeId[1] = { static_cast<int>(referenceElementSet->referenceElement->Type->TypeId) };
+     H5::Attribute h5_attr_numElements = h5_grp.createAttribute("numElements", H5::PredType::NATIVE_UINT, H5::DataSpace(1, h5_dims_numElements ) );
+     h5_attr_numElements.write( H5::PredType::NATIVE_UINT, h5_values_numElements );
+@@ -523,7 +523,7 @@ finley::ElementFile* loadElements_hdf5(const H5::Group h5_grp, const int integra
+             H5::DataType h5_type_index = H5::PredType::NATIVE_INT;
+         #endif
+ 
+-        uint h5_numElements=0, h5_numNodes=0;
++        unsigned int h5_numElements=0, h5_numNodes=0;
+         int h5_typeId=0;
+ 
+ 
+diff --git a/finley/src/FinleyDomain.cpp b/finley/src/FinleyDomain.cpp
+index a2deff668..38fb1a171 100644
+--- a/finley/src/FinleyDomain.cpp
++++ b/finley/src/FinleyDomain.cpp
+@@ -242,7 +242,7 @@ void FinleyDomain::dump(const string& fileName) const
+         H5::Group h5_grp_nodes = h5_file.createGroup("Nodes");
+ 
+         hsize_t h5_dims_numDim[1] = { 1 };
+-        uint h5_values_numDim[1] = { static_cast<uint>(numDim) };
++        unsigned int h5_values_numDim[1] = { static_cast<unsigned int>(numDim) };
+         H5::Attribute h5_attr_numDim = h5_grp_nodes.createAttribute("numDim", H5::PredType::NATIVE_UINT, H5::DataSpace(1, h5_dims_numDim ) );
+         h5_attr_numDim.write( H5::PredType::NATIVE_UINT, h5_values_numDim );
+ 
+@@ -286,10 +286,10 @@ void FinleyDomain::dump(const string& fileName) const
+         m_contactElements->dump(h5_file.createGroup("ContactElements"));
+         m_points->dump(h5_file.createGroup("Points"));
+         // save tags:
+-        uint numTags = static_cast<uint>(m_tagMap.size());
++        unsigned int numTags = static_cast<unsigned int>(m_tagMap.size());
+         H5::Group h5_grp_tags = h5_file.createGroup("Tags");
+         hsize_t h5_dims_numTags[1] = { 1 };
+-        uint h5_values_numTags[1] = { numTags };
++        unsigned int h5_values_numTags[1] = { numTags };
+         H5::Attribute h5_attr_numTags = h5_grp_tags.createAttribute("numTags", H5::PredType::NATIVE_UINT, H5::DataSpace(1, h5_dims_numTags ) );
+         h5_attr_numTags.write( H5::PredType::NATIVE_UINT, h5_values_numTags );
+ 
+-- 
+2.43.0
+
