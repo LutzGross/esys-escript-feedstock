@@ -1,0 +1,46 @@
+From 2b6c9a126bb07497ecac354dfdfc1e9415001d6a Mon Sep 17 00:00:00 2001
+From: Lutz Gross <lutz.gross@gmail.com>
+Date: Wed, 27 May 2026 20:38:07 +0200
+Subject: [PATCH] Generate run_escript.py before the escript SConscript runs
+
+write_launcher() writes escript/py_src/run_escript.py from a template,
+but it was being called *after* the escript SConscript had already
+evaluated Glob('*.py'). On a clean build the file therefore never made
+it into the install set, so on Windows the run-escript.py launcher
+fails at first import with "No module named esys.escript.run_escript".
+(Linux happened to mask this because run-escript there is a bash
+script.)
+
+Move the write_launcher() call up so Glob sees the generated module.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+---
+ SConstruct | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/SConstruct b/SConstruct
+index 235ef4eb2..0479b6e4c 100644
+--- a/SConstruct
++++ b/SConstruct
+@@ -1097,6 +1097,10 @@ if env['weipa']:
+ 
+ 
+ 
++# Generate escript/py_src/run_escript.py before the escript SConscript
++# globs *.py, otherwise the launcher module won't be installed.
++write_launcher(env)
++
+ variant='$BUILD_DIR/$PLATFORM/'
+ env.SConscript('escriptcore/SConscript', variant_dir=variant+'escriptcore', duplicate=0)
+ env.SConscript('escript/SConscript', variant_dir=variant+'escript', duplicate=0)
+@@ -1171,7 +1175,6 @@ generateTestScripts(env, TestGroups)
+ write_buildvars(env)
+ # delete buildvars upon cleanup - target_init is default so use it
+ env.Clean('target_init', File('buildvars', env['libinstall']))
+-write_launcher(env)
+ 
+ # remove obsolete files
+ if not env['usempi']:
+-- 
+2.43.0
+
