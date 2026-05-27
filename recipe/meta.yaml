@@ -12,6 +12,7 @@ source:
         - 0003-uint-to-unsigned-int.patch
         - 0004-and-to-andand.patch
         - 0005-explicit-complex-template-arg.patch
+        - 0006-windows-posix-guards.patch
 build:
     number: 0
 requirements:
