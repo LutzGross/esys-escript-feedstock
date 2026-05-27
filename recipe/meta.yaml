@@ -42,7 +42,8 @@ requirements:
         - matplotlib-base
         - hdf5
         - libopenblas  # [unix]
-        - llvm-openmp
+        - llvm-openmp  # [unix]
+        - openmp  # [win]
         - pyproj
         - scipy
         - sympy
@@ -51,7 +52,8 @@ requirements:
     run:
         - python
         - matplotlib-base
-        - llvm-openmp
+        - llvm-openmp  # [unix]
+        - openmp  # [win]
         - hdf5
         - pyproj
         - scipy
