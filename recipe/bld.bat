@@ -26,7 +26,7 @@ set PYVER=%PY_VER:.=%
     echo omp_flags = '/openmp'
     echo tools_names = ['msvc']
     echo hdf5 = 1
-    echo hdf5_libs = ['libhdf5_cpp', 'libhdf5']
+    echo hdf5_libs = ['hdf5_cpp', 'hdf5']
     echo umfpack = 0
     echo silo = 0
     echo mumps_seq = 0
