@@ -16,7 +16,6 @@ source:
         - 0007-pyd-no-escript-exports.patch
         - 0008-numpy-include-discovery.patch
         - 0009-skip-pythonmpi-pyd-without-mpi4py.patch
-        - 0008-numpy-include-discovery.patch
 build:
     number: 0
 requirements:
