@@ -6,6 +6,8 @@ package:
 source:
     url: https://github.com/LutzGross/esys-escript.github.io/archive/refs/tags/{{ version }}.tar.gz
     sha256: 2ffb246b00c68f61de4f21bf918e14334acdc4e46263a47bc24313d17fc67926
+    patches:
+        - 0001-anaconda-options-drop-import-os.patch
 build:
     number: 0
 requirements:
