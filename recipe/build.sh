@@ -83,6 +83,8 @@ scons -j"${CPU_COUNT}" \
     build_trilinos=never \
     trilinos_src=${SRC_DIR} \
     umfpack=1 \
+    mumps_seq=1 \
+    mumps_seq_prefix=${PREFIX} \
     build_full || cat config.log
 
 ln -s ${PREFIX}/lib/buildvars ${PREFIX}/lib/buildvars.in

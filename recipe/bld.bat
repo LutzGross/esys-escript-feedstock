@@ -27,10 +27,14 @@ set PYVER=%PY_VER:.=%
     echo tools_names = ['msvc']
     echo hdf5 = 1
     echo hdf5_libs = ['hdf5_cpp', 'hdf5']
-    echo umfpack = 0
+    echo umfpack = 1
     echo silo = 0
-    echo mumps_seq = 0
+    echo mumps_seq = 1
     echo netcdf = 0
+    echo import os as _os
+    echo umfpack_prefix = [_os.path.join(r'%LIBRARY_PREFIX%', 'include', 'suitesparse'), _os.path.join(r'%LIBRARY_PREFIX%', 'lib')]
+    echo mumps_seq_prefix = r'%LIBRARY_PREFIX%'
+    echo del _os
 ) > conda_win_options.py
 
 call scons -j%CPU_COUNT% ^

@@ -47,7 +47,8 @@ requirements:
         - pyproj
         - scipy
         - sympy
-        - suitesparse  # [unix]
+        - suitesparse
+        - mumps-seq
         - gmsh  # [win]
     run:
         - python
