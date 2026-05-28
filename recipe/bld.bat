@@ -32,7 +32,7 @@ set PYVER=%PY_VER:.=%
     echo mumps_seq = 1
     echo netcdf = 0
     echo import os as _os
-    echo umfpack_prefix = [_os.path.join(r'%LIBRARY_PREFIX%', 'include', 'suitesparse'), _os.path.join(r'%LIBRARY_PREFIX%', 'lib')]
+    echo umfpack_prefix = [_os.path.join^(r'%LIBRARY_PREFIX%', 'include', 'suitesparse'^), _os.path.join^(r'%LIBRARY_PREFIX%', 'lib'^)]
     echo mumps_seq_prefix = r'%LIBRARY_PREFIX%'
     echo mumps_seq_libs = ['dmumps', 'zmumps', 'mumps_common', 'pord']
     echo del _os
