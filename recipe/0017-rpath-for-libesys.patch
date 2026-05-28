@@ -1,0 +1,50 @@
+From 59f63f867d08df5948ea85c4e555e9f9102bc0ed Mon Sep 17 00:00:00 2001
+From: Lutz Gross <lutz.gross@gmail.com>
+Date: Thu, 28 May 2026 21:29:44 +0200
+Subject: [PATCH] Bake <prefix>/lib/esys as RPATH into every shared lib and
+ extension
+
+Previously the .so/.dylib files escript installed under lib/esys/
+had no RPATH/RUNPATH at all, so users had to set LD_LIBRARY_PATH (or
+go through run-escript) for bare `import esys.escript` to work --
+fine for MPI-launched runs but a poor experience for the
+single-process non-MPI builds that conda-forge ships, and the
+conda-build inspector complained about every cross-library NEEDED
+entry it couldn't resolve.
+
+Append `-Wl,-rpath,<prefix>/lib/esys` to SHLINKFLAGS and LINKFLAGS
+unconditionally on Unix. conda-build picks up the absolute build
+prefix in the binary's RUNPATH and rewrites it to $ORIGIN-relative
+at install time, so end users on linux/osx can `import esys.escript`
+straight from a base conda env.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+---
+ SConstruct | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/SConstruct b/SConstruct
+index 2a086cc39..8c648e59f 100644
+--- a/SConstruct
++++ b/SConstruct
+@@ -614,6 +614,17 @@ if env['IS_OSX']:
+ elif not env['IS_WINDOWS']:
+     env.AppendUnique(SHLIBSONAMEFLAGS =   ["-Wl,-soname=$_SHLIBSONAME" ] )
+ 
++if not env['IS_WINDOWS']:
++    # Bake the install location of escript's shared libs as an absolute
++    # RPATH into every binary we link, so the .so/.dylib files find their
++    # siblings and the Python extensions find them too, without users
++    # having to set LD_LIBRARY_PATH or DYLD_LIBRARY_PATH. conda-build's
++    # post-processing rewrites the absolute prefix to a relative
++    # $ORIGIN / @loader_path expression at install time.
++    _libesys = os.path.join(env['prefix'], 'lib', 'esys')
++    env.AppendUnique(SHLINKFLAGS = ["-Wl,-rpath," + _libesys])
++    env.AppendUnique(LINKFLAGS   = ["-Wl,-rpath," + _libesys])
++
+ if env['build_trilinos'] != 'never':
+     if not os.path.isdir(env['trilinos_build']): # create a build folder if the user deleted it
+         os.mkdir(env['trilinos_build'])
+-- 
+2.43.0
+
