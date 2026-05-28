@@ -1,0 +1,47 @@
+From a07c8e20e527d211e90d73f32b532c585ada1c5c Mon Sep 17 00:00:00 2001
+From: Lutz Gross <lutz.gross@gmail.com>
+Date: Thu, 28 May 2026 16:55:28 +0200
+Subject: [PATCH] Undef MPI_COMM_WORLD before MUMPS' mpi.h shim regardless of
+ ESYS_MPI
+
+paso/src/MUMPS.h was already undef'ing MPI_COMM_WORLD before including
+MUMPS' MPI shim header, but only when ESYS_MPI was defined.
+
+The non-MPI build of escript also defines MPI_COMM_WORLD (as the
+integer constant 91, from escriptcore/src/EsysMPI.h's stubs), which
+turns MUMPS' shim line `static MPI_Comm MPI_COMM_WORLD=(MPI_Comm)0;`
+into `static MPI_Comm 91=...;` and the conda-forge MSVC build aborts
+with C2059. Move the undef out from under the ESYS_MPI guard so it
+fires in both cases.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+---
+ paso/src/MUMPS.h | 12 +++++++-----
+ 1 file changed, 7 insertions(+), 5 deletions(-)
+
+diff --git a/paso/src/MUMPS.h b/paso/src/MUMPS.h
+index d443e9c47..9385687cd 100755
+--- a/paso/src/MUMPS.h
++++ b/paso/src/MUMPS.h
+@@ -27,11 +27,13 @@
+ #include "PasoException.h"
+ 
+ #ifdef ESYS_HAVE_MUMPS
+-// TODO: is this needed? #pragma push_macro("MPI_COMM_WORLD")
+-#ifdef ESYS_MPI
+-    #if defined(MPI_COMM_WORLD)
+-    #undef MPI_COMM_WORLD    // breaks mumps_mpi.h, defined in escriptcore/src/EsysMPI.h
+-    #endif
++// MUMPS' MPI shim header declares `static MPI_Comm MPI_COMM_WORLD=...;`.
++// escriptcore/src/EsysMPI.h gives MPI_COMM_WORLD a #define-as-integer when
++// ESYS_MPI is off (and the real MPI mpi.h gives it a different definition
++// when on), either of which would turn that declaration into a syntax error.
++// Drop the macro here before bringing in MUMPS' header.
++#if defined(MPI_COMM_WORLD)
++#undef MPI_COMM_WORLD
+ #endif
+ #ifdef _WIN32
+ #  if __has_include(<mumps_seq/mpi.h>)
+-- 
+2.43.0
+

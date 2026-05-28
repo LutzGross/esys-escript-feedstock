@@ -20,6 +20,7 @@ source:
         - 0011-diagnose-boost-numpy-failure.patch
         - 0012-boost-numpy-libs-list.patch
         - 0013-mumps-mpi-header-probe.patch
+        - 0014-undef-mpi-comm-world-before-mumps.patch
 build:
     number: 0
 requirements:

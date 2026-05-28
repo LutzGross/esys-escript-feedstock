@@ -7,8 +7,13 @@ CFLAGS="${CFLAGS} -I${PREFIX}/include -fPIC"
 CXXFLAGS="${CXXFLAGS} -fPIC -w -fopenmp"
 
 # OpenMP runtime: GNU libgomp on Linux, LLVM libomp on macOS.
+# On macOS also pass -headerpad_max_install_names so conda-build's
+# install_name_tool rewrite step doesn't run out of header space when
+# substituting the long _h_env_placehold... prefix into RPATHs.
+LD_PLATFORM_EXTRA=""
 if [[ "$(uname)" == "Darwin" ]]; then
     OMP_LIB="omp"
+    LD_PLATFORM_EXTRA="-Wl,-headerpad_max_install_names"
 else
     OMP_LIB="gomp"
 fi
@@ -74,7 +79,7 @@ scons -j"${CPU_COUNT}" \
     cxx=${CXX} \
     cppunit_prefix=${PREFIX} \
     hdf5_prefix=${PREFIX} \
-    ld_extra="-L${PREFIX}/lib -l${OMP_LIB}" \
+    ld_extra="-L${PREFIX}/lib -l${OMP_LIB} ${LD_PLATFORM_EXTRA}" \
     openmp=0 \
     omp_flags="-fopenmp" \
     paso=1 \
