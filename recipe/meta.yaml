@@ -22,6 +22,7 @@ source:
         - 0013-mumps-mpi-header-probe.patch
         - 0014-undef-mpi-comm-world-before-mumps.patch
         - 0015-split-ld-extra-string.patch
+        - 0016-raw-string-gmsh-templates.patch
 build:
     number: 0
 requirements:
@@ -49,7 +50,7 @@ requirements:
         - openmp  # [win]
         - scipy
         - sympy
-        - suitesparse
+        - libumfpack
         - mumps-seq
         - gmsh  # [win]
     run:
