@@ -85,6 +85,7 @@ scons -j"${CPU_COUNT}" \
     umfpack=1 \
     mumps_seq=1 \
     mumps_seq_prefix=${PREFIX} \
+    "mumps_seq_libs=['dmumps_seq','zmumps_seq','mumps_common_seq','pord_seq','mpiseq']" \
     build_full || cat config.log
 
 ln -s ${PREFIX}/lib/buildvars ${PREFIX}/lib/buildvars.in
