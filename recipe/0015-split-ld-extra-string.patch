@@ -1,0 +1,44 @@
+From f019c8ad9ed43e036a304842d26609b2f99367bb Mon Sep 17 00:00:00 2001
+From: Lutz Gross <lutz.gross@gmail.com>
+Date: Thu, 28 May 2026 18:15:37 +0200
+Subject: [PATCH] Split ld_extra string into separate args before linking
+
+`ld_extra` is documented as "Extra linker flags" and was being
+forwarded straight into LINKFLAGS via AppendUnique. SCons treats each
+LINKFLAGS entry as one argument, so a CLI value like
+`ld_extra="-L/path -lfoo -Wl,-bar"` was passed to ld as a single token
+whose `-L` consumed the rest of the string -- silently dropping
+`-lfoo` and `-Wl,-bar` from the link line. macOS conda-forge builds
+relied on this to inject -Wl,-headerpad_max_install_names, and were
+hitting "larger updated load commands do not fit" at the
+install_name_tool rewrite step because the flag never made it through.
+
+Split the string before adding it to LINKFLAGS.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+---
+ SConstruct | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/SConstruct b/SConstruct
+index 0479b6e4c..2a086cc39 100644
+--- a/SConstruct
++++ b/SConstruct
+@@ -786,7 +786,13 @@ if env['ld_flags'] != 'default': env.Append(LINKFLAGS =env['ld_flags'])
+ 
+ if env['cxx_extra'] : env.AppendUnique(CXXFLAGS = env['cxx_extra'])
+ if env['cc_extra'] : env.AppendUnique(CCFLAGS = env['cc_extra'])
+-if env['ld_extra']  : env.AppendUnique(LINKFLAGS =env['ld_extra'])
++if env['ld_extra']:
++    # Split string values (as supplied on the scons CLI) into separate args
++    # so the linker doesn't see "-L/path -lfoo -Wl,-bar" as one argument.
++    _ld = env['ld_extra']
++    if isinstance(_ld, str):
++        _ld = _ld.split()
++    env.AppendUnique(LINKFLAGS = _ld)
+ 
+ 
+ # Disable OpenMP if no flags provided
+-- 
+2.43.0
+
