@@ -19,6 +19,7 @@ source:
         - 0010-write-launcher-before-sconscript.patch
         - 0011-diagnose-boost-numpy-failure.patch
         - 0012-boost-numpy-libs-list.patch
+        - 0013-mumps-mpi-header-probe.patch
 build:
     number: 0
 requirements:
@@ -44,7 +45,6 @@ requirements:
         - libopenblas  # [unix]
         - llvm-openmp  # [unix]
         - openmp  # [win]
-        - pyproj
         - scipy
         - sympy
         - suitesparse
@@ -56,7 +56,6 @@ requirements:
         - llvm-openmp  # [unix]
         - openmp  # [win]
         - hdf5
-        - pyproj
         - scipy
         - sympy
         - gmsh  # [win]
