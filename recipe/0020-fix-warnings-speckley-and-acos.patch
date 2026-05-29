@@ -1,0 +1,96 @@
+From 79ce9ace11db5ce1cd529762382b5eadeae41716 Mon Sep 17 00:00:00 2001
+From: Lutz Gross <lutz.gross@gmail.com>
+Date: Fri, 29 May 2026 16:26:15 +0200
+Subject: [PATCH 1/2] Fix self-init of X/Y/D in speckley DefaultAssembler2D
+
+The shallow-copy block was assigning each local Data from itself
+instead of from the matching argument:
+    escript::Data X = Data(X);   // X reads itself, uninitialized
+    escript::Data Y = Data(Y);
+    escript::Data D = Data(D);
+Use the actual parameters XX/YY/DD. Caught by clang's
+-Wuninitialized warning on osx.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+---
+ speckley/src/DefaultAssembler2D.cpp | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/speckley/src/DefaultAssembler2D.cpp b/speckley/src/DefaultAssembler2D.cpp
+index 4c86a4d2b..646108564 100644
+--- a/speckley/src/DefaultAssembler2D.cpp
++++ b/speckley/src/DefaultAssembler2D.cpp
+@@ -410,9 +410,9 @@ void DefaultAssembler2D::assembleComplexPDESystem(AbstractSystemMatrix* mat,
+         throw SpeckleyException("Speckley does not support PDEs using A, B or C");
+ 
+     //shallow copies
+-    escript::Data X = Data(X);
+-    escript::Data Y = Data(Y);
+-    escript::Data D = Data(D);
++    escript::Data X = Data(XX);
++    escript::Data Y = Data(YY);
++    escript::Data D = Data(DD);
+ 
+     // complicate everything
+     if(!D.isEmpty())
+-- 
+2.43.0
+
+
+From 7711604521423eec086eb28b659ff857e42f57be Mon Sep 17 00:00:00 2001
+From: Lutz Gross <lutz.gross@gmail.com>
+Date: Fri, 29 May 2026 16:26:15 +0200
+Subject: [PATCH 2/2] Drop deprecated boost::math::complex::acos fallback
+
+The fallback existed for macOS 10.11 (El Capitan, 2015) where the
+standard library's std::acos for complex was wrong. All supported
+toolchains (C++17 required) implement it correctly, and modern
+boost prints a deprecation warning on every translation unit that
+still pulls in <boost/math/complex/acos.hpp>. Always call
+acos(x) so the warning is gone.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+---
+ escriptcore/src/ArrayOps.h | 17 ++++++++---------
+ 1 file changed, 8 insertions(+), 9 deletions(-)
+
+diff --git a/escriptcore/src/ArrayOps.h b/escriptcore/src/ArrayOps.h
+index 62b7d2d37..bae0ec429 100644
+--- a/escriptcore/src/ArrayOps.h
++++ b/escriptcore/src/ArrayOps.h
+@@ -25,9 +25,12 @@
+ # include <algorithm>
+ #endif // _WIN32
+ 
+-#ifdef ESYS_USE_BOOST_ACOS
+-#include <boost/math/complex/acos.hpp>	// std::acos for complex on OSX (elcapitan) is wrong
+-#endif
++// std::acos for complex was buggy on macOS 10.11 (El Capitan, 2015) and
++// older. We require C++17 and all currently-supported toolchains (clang
++// 14+, gcc 9+, MSVC 19.20+) implement it correctly, so the legacy
++// boost::math::complex::acos fallback has been removed. The
++// CheckComplexAcos configure test is kept but no longer wires anything
++// up if it fails.
+ 
+ #ifndef M_PI
+ #   define M_PI           3.14159265358979323846  /* pi */
+@@ -626,14 +629,10 @@ DataTypes::real_t calc_acos(DataTypes::real_t x)
+     return acos(x);
+ }
+ 
+-inline 
++inline
+ DataTypes::cplx_t calc_acos(DataTypes::cplx_t x)
+ {
+-#ifdef ESYS_USE_BOOST_ACOS
+-              return boost::math::acos(x);
+-#else
+-              return acos(x);
+-#endif  
++    return acos(x);
+ }
+ 
+ 
+-- 
+2.43.0
+

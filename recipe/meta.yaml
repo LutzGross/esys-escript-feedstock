@@ -26,6 +26,7 @@ source:
         - 0017-rpath-for-libesys.patch
         - 0018-also-rpath-prefix-lib.patch
         - 0019-drop-duplicate-rpath-shlinkflags.patch
+        - 0020-fix-warnings-speckley-and-acos.patch
 build:
     number: 0
 requirements:
