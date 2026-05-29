@@ -24,6 +24,7 @@ source:
         - 0015-split-ld-extra-string.patch
         - 0016-raw-string-gmsh-templates.patch
         - 0017-rpath-for-libesys.patch
+        - 0018-also-rpath-prefix-lib.patch
 build:
     number: 0
 requirements:
