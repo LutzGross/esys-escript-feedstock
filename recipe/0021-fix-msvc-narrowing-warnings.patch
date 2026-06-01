@@ -1,0 +1,100 @@
+From c87b79fbafd1ea3dd770366031dd8fe36bd403ee Mon Sep 17 00:00:00 2001
+From: Lutz Gross <lutz.gross@gmail.com>
+Date: Tue, 2 Jun 2026 10:00:00 +0200
+Subject: [PATCH] Fix MSVC narrowing warnings (and a latent paso reordering
+ bug)
+
+Four MSVC 2022 warnings on the win-64 conda-forge build, all in escript
+code:
+
+* paso/src/Options.cpp(66) C4305 'int' -> 'bool'. Options::reordering was
+  declared `bool`, but it stores a reordering *strategy code*
+  (PASO_NO_REORDERING == 17, PASO_DEFAULT_REORDERING == 30, ...): it is set
+  from mapEscriptOption(sb.getReordering()) and passed to MKL_solve(...,
+  index_t reordering, ...) which switch()es on it. Storing those codes in a
+  bool collapsed them all to 1, silently breaking MKL reordering selection
+  on every platform (gcc/clang just didn't warn). Declare it `index_t`,
+  which is what every consumer already expects.
+
+* ripley/src/RipleyDomain.cpp(172) and speckley/src/SpeckleyDomain.cpp(120)
+  C4267 'size_t' -> 'int': pair<int,dim_t>(1, m_diracPoints.size()) narrows
+  the 64-bit size() to dim_t. Cast explicitly.
+
+* weipa/src/DataVar.cpp(168,175) C4244 real_t -> float: std::copy from a
+  double source into a float buffer. Replace with an explicit
+  static_cast<float> loop (the narrowing is intended here -- the VTK/SILO
+  export buffer is single precision).
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+---
+ paso/src/Options.h              | 2 +-
+ ripley/src/RipleyDomain.cpp     | 2 +-
+ speckley/src/SpeckleyDomain.cpp | 2 +-
+ weipa/src/DataVar.cpp           | 6 ++++--
+ 4 files changed, 7 insertions(+), 5 deletions(-)
+
+diff --git a/paso/src/Options.h b/paso/src/Options.h
+index b72ff07..9abcdbf 100644
+--- a/paso/src/Options.h
++++ b/paso/src/Options.h
+@@ -113,7 +113,7 @@ struct PASO_DLL_API Options
+     double inner_tolerance;
+     bool adapt_inner_tolerance;
+     bool verbose;
+-    bool reordering;
++    index_t reordering;
+     int preconditioner;
+     dim_t iter_max;
+     dim_t inner_iter_max;
+diff --git a/ripley/src/RipleyDomain.cpp b/ripley/src/RipleyDomain.cpp
+index fc9888d..d0f8b5e 100644
+--- a/ripley/src/RipleyDomain.cpp
++++ b/ripley/src/RipleyDomain.cpp
+@@ -169,7 +169,7 @@ pair<int,dim_t> RipleyDomain::getDataShape(int fsType) const
+         case ReducedFaceElements:
+             return pair<int,dim_t>(1, getNumFaceElements());
+         case Points:
+-            return pair<int,dim_t>(1, m_diracPoints.size());
++            return pair<int,dim_t>(1, static_cast<dim_t>(m_diracPoints.size()));
+         default:
+             break;
+     }
+diff --git a/speckley/src/SpeckleyDomain.cpp b/speckley/src/SpeckleyDomain.cpp
+index dc2e071..03abaf8 100644
+--- a/speckley/src/SpeckleyDomain.cpp
++++ b/speckley/src/SpeckleyDomain.cpp
+@@ -117,7 +117,7 @@ pair<int,dim_t> SpeckleyDomain::getDataShape(int fsType) const
+         case ReducedElements:
+             return pair<int,dim_t>(1, getNumElements());
+         case Points:
+-            return pair<int,dim_t>(1, m_diracPoints.size());
++            return pair<int,dim_t>(1, static_cast<dim_t>(m_diracPoints.size()));
+         default:
+             break;
+     }
+diff --git a/weipa/src/DataVar.cpp b/weipa/src/DataVar.cpp
+index c7b7fca..31a1718 100644
+--- a/weipa/src/DataVar.cpp
++++ b/weipa/src/DataVar.cpp
+@@ -165,14 +165,16 @@ bool DataVar::initFromEscript(escript::Data& escriptData, const_DomainChunk_ptr
+             const escript::DataTypes::real_t* values =
+                 escriptData.getDataRO();
+             for (int pointNo=0; pointNo<numSamples*ptsPerSample; pointNo++) {
+-                copy(values, values+dimSize, destPtr);
++                for (size_t i=0; i<dimSize; i++)
++                    destPtr[i] = static_cast<float>(values[i]);
+                 destPtr += dimSize;
+             }
+         } else {
+             for (int sampleNo=0; sampleNo<numSamples; sampleNo++) {
+                 const escript::DataTypes::real_t* values =
+                     escriptData.getSampleDataRO(sampleNo);
+-                copy(values, values+dataSize, destPtr);
++                for (size_t i=0; i<dataSize; i++)
++                    destPtr[i] = static_cast<float>(values[i]);
+                 destPtr += dataSize;
+             }
+         }
+-- 
+2.43.0
+
