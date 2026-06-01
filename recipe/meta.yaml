@@ -71,7 +71,7 @@ requirements:
 test:
     commands:
         - run-escript -c
-        - run-escript /tmp/release_sanity.py  # [linux]
+        - run-escript /tmp/release_sanity.py  # [unix]
         - run-escript %TEMP%/release_sanity.py  # [win]
 about:
     home: https://github.com/LutzGross/esys-escript.github.io
