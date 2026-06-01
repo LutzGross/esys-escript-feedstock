@@ -1,0 +1,58 @@
+From 02f9e5cdbbaf69b34782a925342f68373e743c1c Mon Sep 17 00:00:00 2001
+From: Lutz Gross <lutz.gross@gmail.com>
+Date: Tue, 2 Jun 2026 12:00:00 +0200
+Subject: [PATCH] Only run the pip lib-path bootstrap when esys_escript_lib/
+ exists
+
+esys/escript/__init__.py treats any install under site-packages as a pip
+wheel: it expects a sibling esys_escript_lib/ directory with the shared libs
+and a buildvars.in template, generates buildvars from it, and re-execs python
+with LD_LIBRARY_PATH set. That layout has no RPATH, so the bootstrap is
+needed for wheels -- but it broke bare `import esys` for conda installs,
+which live in site-packages, resolve their libs via RPATH, and have no
+esys_escript_lib/: the import died with
+  FileNotFoundError: .../site-packages/esys_escript_lib/buildvars.in
+
+Gate the bootstrap on os.path.isdir(esys_lib_path) so it runs only for the
+real wheel layout. conda/system installs fall through to the normal import
+and resolve libs via RPATH. Fixes bare import on Linux and macOS (Windows
+never took this branch); pip wheels are unaffected since they ship the dir.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+---
+ escript/py_src/__init__.py | 12 +++++++++---
+ 1 file changed, 9 insertions(+), 3 deletions(-)
+
+diff --git a/escript/py_src/__init__.py b/escript/py_src/__init__.py
+index 9e95c85..d4c4001 100644
+--- a/escript/py_src/__init__.py
++++ b/escript/py_src/__init__.py
+@@ -30,16 +30,22 @@ import os, sys
+ esys_packages = __name__.split('.')
+ esys_paths = os.path.dirname(os.path.abspath(__file__)).split(os.sep)
+ __buildinfo_file__ = None
+-if esys_paths[-(len(esys_packages)+1)] == 'site-packages':
++package_prefix = os.sep.join(esys_paths[:-len(esys_packages)])
++esys_lib_path = os.sep.join([package_prefix, 'esys_escript_lib'])
++# The pip/wheel layout ships escript's shared libs and a buildvars.in
++# template in a sibling esys_escript_lib/ directory and carries no RPATH, so
++# it must bootstrap the dynamic library path here. conda and system installs
++# resolve their libs via RPATH (or a system path) and have no
++# esys_escript_lib/ directory, so skip this bootstrap for them -- otherwise
++# bare `import esys` fails trying to read esys_escript_lib/buildvars.in.
++if esys_paths[-(len(esys_packages)+1)] == 'site-packages' and os.path.isdir(esys_lib_path):
+     # check the library path for a pip install
+-    package_prefix = os.sep.join(esys_paths[:-len(esys_packages)])
+     if os.name == 'nt':
+         lib_env_name = 'PATH'
+         cmd, env1, env2 = 'set', '%', '%'
+     else:
+         lib_env_name = 'LD_LIBRARY_PATH'
+         cmd, env1, env2 = 'export', '$', ''
+-    esys_lib_path = os.sep.join([package_prefix, 'esys_escript_lib'])
+     buildinfo_name = 'buildvars'
+     __buildinfo_file__ = os.path.join(esys_lib_path, buildinfo_name)
+     # check for the buildvars file
+-- 
+2.43.0
+

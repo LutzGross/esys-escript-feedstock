@@ -28,6 +28,7 @@ source:
         - 0019-drop-duplicate-rpath-shlinkflags.patch
         - 0020-fix-warnings-speckley-and-acos.patch
         - 0021-fix-msvc-narrowing-warnings.patch
+        - 0022-pip-bootstrap-only-with-esys-escript-lib.patch
 build:
     number: 0
 requirements:
