@@ -71,8 +71,11 @@ requirements:
 test:
     commands:
         - run-escript -c
-        - run-escript /tmp/release_sanity.py  # [unix]
-        - run-escript %TEMP%/release_sanity.py  # [win]
+        # Use the plain interpreter (not run-escript) so this guards the
+        # design goal: bare `import esys` must work without run-escript
+        # setting LD_LIBRARY_PATH/PYTHONPATH (relies on RPATH + site-packages).
+        - python /tmp/release_sanity.py  # [unix]
+        - python %TEMP%/release_sanity.py  # [win]
 about:
     home: https://github.com/LutzGross/esys-escript.github.io
     summary: esys-escript is a programming tool for implementing mathematical
