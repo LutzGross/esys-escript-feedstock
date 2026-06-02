@@ -80,7 +80,7 @@ scons -j"${CPU_COUNT}" \
     cppunit_prefix=${PREFIX} \
     hdf5_prefix=${PREFIX} \
     ld_extra="-L${PREFIX}/lib -l${OMP_LIB} ${LD_PLATFORM_EXTRA}" \
-    openmp=0 \
+    openmp=1 \
     omp_flags="-fopenmp" \
     paso=1 \
     PREFIX=${PREFIX} \
