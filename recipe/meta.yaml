@@ -75,7 +75,12 @@ test:
         # Use the plain interpreter (not run-escript) so this guards the
         # design goal: bare `import esys` must work without run-escript
         # setting LD_LIBRARY_PATH/PYTHONPATH (relies on RPATH + site-packages).
-        - python /tmp/release_sanity.py  # [unix]
+        - python /tmp/release_sanity.py  # [linux]
+        # osx still segfaults during `import esys.escript`. Probe the lowest-level
+        # extension first, then run the full sanity; on any crash dump the macOS
+        # DiagnosticReports backtrace (.ips) and escriptcpp.so's dylib list so CI
+        # surfaces the crashing library/symbol (a bare "Segmentation fault" does not).
+        - 'python -X faulthandler -c "import esys.escriptcore.escriptcpp" && python -X faulthandler /tmp/release_sanity.py || { echo "=== macOS crash report ==="; cat ~/Library/Logs/DiagnosticReports/python*.ips 2>/dev/null || echo "(no .ips crash report found)"; echo "=== otool -L escriptcpp.so ==="; otool -L $PREFIX/lib/python*/site-packages/esys/escriptcore/escriptcpp.so 2>/dev/null; false; }'  # [osx]
         - python %TEMP%/release_sanity.py  # [win]
 about:
     home: https://github.com/LutzGross/esys-escript.github.io
