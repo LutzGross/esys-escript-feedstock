@@ -76,11 +76,12 @@ test:
         # design goal: bare `import esys` must work without run-escript
         # setting LD_LIBRARY_PATH/PYTHONPATH (relies on RPATH + site-packages).
         - python /tmp/release_sanity.py  # [linux]
-        # osx still segfaults during `import esys.escript`. Probe the lowest-level
-        # extension first, then run the full sanity; on any crash dump the macOS
-        # DiagnosticReports backtrace (.ips) and escriptcpp.so's dylib list so CI
-        # surfaces the crashing library/symbol (a bare "Segmentation fault" does not).
-        - 'python -X faulthandler -c "import esys.escriptcore.escriptcpp" && python -X faulthandler /tmp/release_sanity.py || { echo "=== macOS crash report ==="; cat ~/Library/Logs/DiagnosticReports/python*.ips 2>/dev/null || echo "(no .ips crash report found)"; echo "=== otool -L escriptcpp.so ==="; otool -L $PREFIX/lib/python*/site-packages/esys/escriptcore/escriptcpp.so 2>/dev/null; false; }'  # [osx]
+        # osx segfaults in create_module while loading escriptcpp.so (C++ static
+        # init / PyInit, faulthandler bottoms out there). Probe the core extension
+        # first; on crash get a synchronous native backtrace via lldb, then (after a
+        # sleep, since ReportCrash writes asynchronously) dump the newest .ips so CI
+        # names the crashing library + symbol.
+        - 'python -X faulthandler -c "import esys.escriptcore.escriptcpp" && python -X faulthandler /tmp/release_sanity.py || { echo "=== lldb native backtrace ==="; lldb --batch -o run -o "bt all" -o quit -- python -c "import esys.escriptcore.escriptcpp" 2>&1 | tail -200; echo "=== waiting for ReportCrash (.ips) ==="; sleep 25; ls -lat ~/Library/Logs/DiagnosticReports/ 2>/dev/null | head; f=$(ls -t ~/Library/Logs/DiagnosticReports/*.ips 2>/dev/null | head -1); echo "newest crash report: $f"; head -200 "$f" 2>/dev/null; false; }'  # [osx]
         - python %TEMP%/release_sanity.py  # [win]
 about:
     home: https://github.com/LutzGross/esys-escript.github.io
