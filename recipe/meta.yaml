@@ -46,6 +46,13 @@ requirements:
     host:
         - libboost-devel
         - libboost-python-devel
+        # osx-64 resolves libcxx 22 while the toolchain is clang 19 and
+        # libboost-python 1.88 was built against an older libc++. That libc++
+        # ABI skew corrupts boost.python's converter registry: importing ANY
+        # boost.python module with an int default-arg segfaults (proven with a
+        # trivial 5-line probe, build 1533409). Pin libcxx to the clang-19
+        # series so the build links a compatible libc++.
+        - libcxx <20  # [osx]
         - numpy
         - python
         - setuptools
@@ -62,6 +69,7 @@ requirements:
     run:
         - python
         - matplotlib-base
+        - libcxx <20  # [osx]  -- keep runtime libc++ on the clang-19 ABI (see host note)
         - llvm-openmp  # [unix]
         - openmp  # [win]
         - hdf5
