@@ -6,19 +6,27 @@ set -o pipefail
 CFLAGS="${CFLAGS} -I${PREFIX}/include -fPIC"
 CXXFLAGS="${CXXFLAGS} -fPIC -w -fopenmp"
 
+BOOST_LIBS="boost_python${CONDA_PY}"
+
 # OpenMP runtime: GNU libgomp on Linux, LLVM libomp on macOS.
 # On macOS also pass -headerpad_max_install_names so conda-build's
 # install_name_tool rewrite step doesn't run out of header space when
 # substituting the long _h_env_placehold... prefix into RPATHs.
+#
+# osx import segfault (build 1533284): escriptcpp's PyInit crashes in
+# boost::python::converter::arg_to_python<int> -- the builtin int->Python
+# converter is null at module-init time. Force-retain libboost_python so
+# conda's default -Wl,-dead_strip_dylibs cannot drop the dependency (the
+# converter-registration side effects live in that dylib). cctools ld64
+# rejects -force_load on a dylib and no static boost archive ships, so use
+# the equivalent -needed-l retention flag.
 LD_PLATFORM_EXTRA=""
 if [[ "$(uname)" == "Darwin" ]]; then
     OMP_LIB="omp"
-    LD_PLATFORM_EXTRA="-Wl,-headerpad_max_install_names"
+    LD_PLATFORM_EXTRA="-Wl,-headerpad_max_install_names -Wl,-needed-l${BOOST_LIBS}"
 else
     OMP_LIB="gomp"
 fi
-
-BOOST_LIBS="boost_python${CONDA_PY}"
 PYTHON_LIB_PATH="${PREFIX}/lib"
 PYTHON_INC_PATH="${PREFIX}/include/python${PY_VER}"
 PYTHON_LIB_NAME="python${PY_VER}"
