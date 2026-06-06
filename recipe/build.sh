@@ -12,18 +12,10 @@ BOOST_LIBS="boost_python${CONDA_PY}"
 # On macOS also pass -headerpad_max_install_names so conda-build's
 # install_name_tool rewrite step doesn't run out of header space when
 # substituting the long _h_env_placehold... prefix into RPATHs.
-#
-# osx import segfault (build 1533284): escriptcpp's PyInit crashes in
-# boost::python::converter::arg_to_python<int> -- the builtin int->Python
-# converter is null at module-init time. Force-retain libboost_python so
-# conda's default -Wl,-dead_strip_dylibs cannot drop the dependency (the
-# converter-registration side effects live in that dylib). cctools ld64
-# rejects -force_load on a dylib and no static boost archive ships, so use
-# the equivalent -needed-l retention flag.
 LD_PLATFORM_EXTRA=""
 if [[ "$(uname)" == "Darwin" ]]; then
     OMP_LIB="omp"
-    LD_PLATFORM_EXTRA="-Wl,-headerpad_max_install_names -Wl,-needed-l${BOOST_LIBS}"
+    LD_PLATFORM_EXTRA="-Wl,-headerpad_max_install_names"
 else
     OMP_LIB="gomp"
 fi
@@ -109,3 +101,40 @@ scons -j"${CPU_COUNT}" \
 ln -s ${PREFIX}/lib/buildvars ${PREFIX}/lib/buildvars.in
 cp -R ${PREFIX}/esys ${SP_DIR}/esys
 cp -R ${BUILD_PREFIX}/escript_build/scripts/release_sanity.py /tmp/release_sanity.py
+
+# --- osx isolation probe -------------------------------------------------
+# The osx import segfault is in boost::python::converter::arg_to_python<int>
+# during PyInit_escriptcpp (the int->Python converter is null/garbage at
+# module-init). Determine whether the fault is environmental (any boost.python
+# int conversion) or escript-specific by building a trivial boost.python module
+# with the exact `arg("x")=<int>` pattern and importing it in THIS build env
+# (real ${PREFIX}, so libs resolve without conda relocation), alongside escript.
+# Non-fatal: we only want the comparison printed into the build log.
+if [[ "$(uname)" == "Darwin" ]]; then
+    echo "===== OSX ISOLATION PROBE START ====="
+    set +e
+    cat > /tmp/bpyprobe.cpp <<'CPP'
+#include <boost/python.hpp>
+using namespace boost::python;
+static int addone(int x) { return x + 1; }
+BOOST_PYTHON_MODULE(bpyprobe) {
+    def("addone", &addone, (arg("x") = 1));
+}
+CPP
+    ${CXX} ${CXXFLAGS} -shared -fPIC /tmp/bpyprobe.cpp -o /tmp/bpyprobe.so \
+        -I${PREFIX}/include -I${PREFIX}/include/python${PY_VER} \
+        -L${PREFIX}/lib -lboost_python${CONDA_PY} -lpython${PY_VER} \
+        ${LDFLAGS} -Wl,-rpath,${PREFIX}/lib
+    echo "probe: compile rc=$?"
+    echo "--- probe A: import trivial boost.python module (arg(\"x\")=1) ---"
+    ( cd /tmp && ${PREFIX}/bin/python -X faulthandler \
+        -c "import bpyprobe; print('TRIVIAL_BPY_OK addone(41)=', bpyprobe.addone(41))" )
+    echo "probe A: import rc=$?"
+    echo "--- probe B: import escriptcpp in the same build env ---"
+    ${PREFIX}/bin/python -X faulthandler \
+        -c "import esys.escriptcore.escriptcpp; print('ESCRIPT_BPY_OK')"
+    echo "probe B: import rc=$?"
+    set -e
+    echo "===== OSX ISOLATION PROBE END ====="
+fi
+# -------------------------------------------------------------------------
