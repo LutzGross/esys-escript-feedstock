@@ -36,12 +36,6 @@ requirements:
         - {{ compiler('cxx') }}
         - {{ compiler('fortran') }}
         - {{ stdlib("c") }}
-        # libboost-python 1.88 was built against libcxx 19; the build env
-        # otherwise pulls libcxx 22, so escript + boost.python consumers get
-        # compiled against libcxx-22 headers while libboost_python.dylib is
-        # libcxx-19 -- the std::type_info/registry skew that nulls the int
-        # converter (see host note). Pin the COMPILE-time libc++ to match.
-        - libcxx <20  # [osx]
         - scons
         - cmake
         - make
@@ -50,15 +44,16 @@ requirements:
         - numpy
         - git
     host:
-        - libboost-devel
-        - libboost-python-devel
-        # osx-64 resolves libcxx 22 while the toolchain is clang 19 and
-        # libboost-python 1.88 was built against an older libc++. That libc++
-        # ABI skew corrupts boost.python's converter registry: importing ANY
-        # boost.python module with an int default-arg segfaults (proven with a
-        # trivial 5-line probe, build 1533409). Pin libcxx to the clang-19
-        # series so the build links a compatible libc++.
-        - libcxx <20  # [osx]
+        # osx-64: the 1.88.0 *_7 boost rebuild (2025-12-21, same day as the
+        # libcxx-22 toolchain migration) segfaults on import of any boost.python
+        # module using an int default-arg (arg("x")=1 -> arg_to_python<int>),
+        # independent of libcxx version (proven: pinning all envs to libcxx 19
+        # did not help, build 1533807). Pin to the last pre-rebuild build (*_6,
+        # py310hbe5637a_6, 2025-11-13) to test whether *_7 regressed it.
+        - libboost-devel 1.88.0 *_6  # [osx]
+        - libboost-python-devel 1.88.0 *_6  # [osx]
+        - libboost-devel  # [not osx]
+        - libboost-python-devel  # [not osx]
         - numpy
         - python
         - setuptools
@@ -75,7 +70,6 @@ requirements:
     run:
         - python
         - matplotlib-base
-        - libcxx <20  # [osx]  -- keep runtime libc++ on the clang-19 ABI (see host note)
         - llvm-openmp  # [unix]
         - openmp  # [win]
         - hdf5
