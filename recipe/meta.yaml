@@ -36,6 +36,12 @@ requirements:
         - {{ compiler('cxx') }}
         - {{ compiler('fortran') }}
         - {{ stdlib("c") }}
+        # libboost-python 1.88 was built against libcxx 19; the build env
+        # otherwise pulls libcxx 22, so escript + boost.python consumers get
+        # compiled against libcxx-22 headers while libboost_python.dylib is
+        # libcxx-19 -- the std::type_info/registry skew that nulls the int
+        # converter (see host note). Pin the COMPILE-time libc++ to match.
+        - libcxx <20  # [osx]
         - scons
         - cmake
         - make
