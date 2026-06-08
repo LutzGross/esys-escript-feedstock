@@ -44,16 +44,8 @@ requirements:
         - numpy
         - git
     host:
-        # osx-64: the 1.88.0 *_7 boost rebuild (2025-12-21, same day as the
-        # libcxx-22 toolchain migration) segfaults on import of any boost.python
-        # module using an int default-arg (arg("x")=1 -> arg_to_python<int>),
-        # independent of libcxx version (proven: pinning all envs to libcxx 19
-        # did not help, build 1533807). Pin to the last pre-rebuild build (*_6,
-        # py310hbe5637a_6, 2025-11-13) to test whether *_7 regressed it.
-        - libboost-devel 1.88.0 *_6  # [osx]
-        - libboost-python-devel 1.88.0 *_6  # [osx]
-        - libboost-devel  # [not osx]
-        - libboost-python-devel  # [not osx]
+        - libboost-devel
+        - libboost-python-devel
         - numpy
         - python
         - setuptools
