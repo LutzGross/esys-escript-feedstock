@@ -1,0 +1,67 @@
+name: osx boost.python link-mode test
+
+# Standalone reproducer for conda-forge/boost-feedstock#266.
+# Tests whether a trivial Boost.Python module with an int default arg
+# (def("addone", &addone, (arg("x")=1))) segfaults on import, comparing
+#   A) linking libpython directly (-lpython3.10)   -- the original report
+#   B) -Wl,-undefined,dynamic_lookup, no libpython  -- @isuruf's suggestion
+
+on:
+  push:
+    branches: [osx-linkmode-test]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: macos-13      # Intel -> conda osx-64 packages (matches the failing build)
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniforge-version: latest
+          python-version: "3.10"
+          channels: conda-forge
+          channel-priority: strict
+
+      - name: install toolchain + boost.python
+        run: conda install -y libboost-python-devel clangxx_osx-64 ld64
+
+      - name: report environment
+        run: |
+          echo "arch=$(uname -m)  CONDA_SUBDIR=${CONDA_SUBDIR:-<unset>}"
+          conda list | grep -E "(^| )(libboost-python|libboost|libcxx|clang_osx-64|clangxx_osx-64|python|ld64) " || true
+          echo "CXX=$CXX"
+          echo "CXXFLAGS=$CXXFLAGS"
+          echo "LDFLAGS=$LDFLAGS"
+
+      - name: link-mode test
+        run: |
+          set +e   # do not abort on the expected segfault
+          cat > bpyprobe.cpp <<'EOF'
+          #include <boost/python.hpp>
+          using namespace boost::python;
+          static int addone(int x) { return x + 1; }
+          BOOST_PYTHON_MODULE(bpyprobe) { def("addone", &addone, (arg("x") = 1)); }
+          EOF
+
+          run_variant () {
+            label="$1"; shift
+            echo "===================== $label ====================="
+            rm -f bpyprobe.so
+            ( set -x
+              $CXX $CXXFLAGS -shared -fPIC bpyprobe.cpp -o bpyprobe.so \
+                -I"$CONDA_PREFIX/include" -I"$CONDA_PREFIX/include/python3.10" \
+                -L"$CONDA_PREFIX/lib" "$@" \
+                $LDFLAGS -Wl,-rpath,"$CONDA_PREFIX/lib" )
+            echo "[$label] compile rc=$?"
+            otool -L bpyprobe.so 2>/dev/null | grep -iE "python|boost|libc\+\+" || true
+            python -X faulthandler -c "import bpyprobe; print('[$label] IMPORT OK ->', bpyprobe.addone(41))"
+            echo "[$label] import rc=$?  (0 = works, 139 = segfault)"
+          }
+
+          run_variant "A original (-lpython3.10)"            -lboost_python310 -lpython3.10
+          run_variant "B isuruf (-undefined dynamic_lookup)" -lboost_python310 -Wl,-undefined,dynamic_lookup
+
+          echo "===================== DONE ====================="
