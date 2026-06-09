@@ -6,13 +6,14 @@ package:
 source:
     url: https://github.com/LutzGross/esys-escript.github.io/archive/refs/tags/{{ version }}.tar.gz
     sha256: 5b84c1dfa555f891d77b1d5d9765f9ffb668e80ca33acd226b605ae0d62782d1
+    patches:
+        # macOS: link extensions with -undefined dynamic_lookup instead of
+        # libpython -> fixes the boost.python import segfault
+        # (conda-forge/boost-feedstock#266). Upstream in escript master;
+        # carried here until the next escript release.
+        - 0001-osx-python-dynamic-lookup.patch
 build:
     number: 0
-    # osx is blocked by an upstream Boost.Python bug
-    # (conda-forge/boost-feedstock#266): importing any boost.python module
-    # with an int default-arg segfaults on osx-64. Re-enable (drop this skip)
-    # once that is fixed.
-    skip: true  # [osx]
 requirements:
     build:
         - {{ compiler('cxx') }}
