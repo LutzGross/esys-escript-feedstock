@@ -1,36 +1,18 @@
-{% set version = "6.1.0" %}
+{% set version = "6.1.1" %}
 
 package:
     name: esys-escript
     version: {{ version }}
 source:
     url: https://github.com/LutzGross/esys-escript.github.io/archive/refs/tags/{{ version }}.tar.gz
-    sha256: 2ffb246b00c68f61de4f21bf918e14334acdc4e46263a47bc24313d17fc67926
-    patches:
-        - 0001-anaconda-options-drop-import-os.patch
-        - 0002-openmp-signed-loop-counters.patch
-        - 0003-uint-to-unsigned-int.patch
-        - 0004-and-to-andand.patch
-        - 0005-explicit-complex-template-arg.patch
-        - 0006-windows-posix-guards.patch
-        - 0007-pyd-no-escript-exports.patch
-        - 0008-numpy-include-discovery.patch
-        - 0009-skip-pythonmpi-pyd-without-mpi4py.patch
-        - 0010-write-launcher-before-sconscript.patch
-        - 0011-diagnose-boost-numpy-failure.patch
-        - 0012-boost-numpy-libs-list.patch
-        - 0013-mumps-mpi-header-probe.patch
-        - 0014-undef-mpi-comm-world-before-mumps.patch
-        - 0015-split-ld-extra-string.patch
-        - 0016-raw-string-gmsh-templates.patch
-        - 0017-rpath-for-libesys.patch
-        - 0018-also-rpath-prefix-lib.patch
-        - 0019-drop-duplicate-rpath-shlinkflags.patch
-        - 0020-fix-warnings-speckley-and-acos.patch
-        - 0021-fix-msvc-narrowing-warnings.patch
-        - 0022-pip-bootstrap-only-with-esys-escript-lib.patch
+    sha256: 5b84c1dfa555f891d77b1d5d9765f9ffb668e80ca33acd226b605ae0d62782d1
 build:
     number: 0
+    # osx is blocked by an upstream Boost.Python bug
+    # (conda-forge/boost-feedstock#266): importing any boost.python module
+    # with an int default-arg segfaults on osx-64. Re-enable (drop this skip)
+    # once that is fixed.
+    skip: true  # [osx]
 requirements:
     build:
         - {{ compiler('cxx') }}
@@ -75,14 +57,7 @@ test:
         # Use the plain interpreter (not run-escript) so this guards the
         # design goal: bare `import esys` must work without run-escript
         # setting LD_LIBRARY_PATH/PYTHONPATH (relies on RPATH + site-packages).
-        - python /tmp/release_sanity.py  # [linux]
-        # osx segfaults in create_module while loading escriptcpp.so (C++ static
-        # init / PyInit, faulthandler bottoms out there). Probe the core extension
-        # first; on crash sleep (ReportCrash writes the .ips asynchronously) then
-        # dump the newest DiagnosticReports/*.ips so CI names the crashing library
-        # + symbol. NOTE: do NOT use lldb here -- it cannot attach on the headless
-        # CI and hangs the job to the 6h Azure timeout.
-        - 'python -X faulthandler -c "import esys.escriptcore.escriptcpp" && python -X faulthandler /tmp/release_sanity.py || { echo "=== waiting for ReportCrash (.ips) ==="; sleep 25; echo "=== DiagnosticReports listing ==="; ls -lat ~/Library/Logs/DiagnosticReports/ 2>/dev/null | head -20; f=$(ls -t ~/Library/Logs/DiagnosticReports/*.ips 2>/dev/null | head -1); echo "newest crash report: $f"; head -250 "$f" 2>/dev/null || echo "(no .ips crash report found)"; false; }'  # [osx]
+        - python /tmp/release_sanity.py  # [unix]
         - python %TEMP%/release_sanity.py  # [win]
 about:
     home: https://github.com/LutzGross/esys-escript.github.io
