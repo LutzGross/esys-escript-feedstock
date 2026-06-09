@@ -13,11 +13,19 @@ on:
 
 jobs:
   test:
-    runs-on: macos-13      # Intel -> conda osx-64 packages (matches the failing build)
+    # macos-13 (Intel) is gone; run on arm64 and target osx-64 via Rosetta so we
+    # reproduce the failing conda-forge osx-64 build.
+    runs-on: macos-14
+    env:
+      CONDA_SUBDIR: osx-64
     defaults:
       run:
         shell: bash -el {0}
     steps:
+      - name: ensure Rosetta 2 (to run osx-64 binaries)
+        shell: bash {0}
+        run: softwareupdate --install-rosetta --agree-to-license || true
+
       - uses: conda-incubator/setup-miniconda@v3
         with:
           miniforge-version: latest
@@ -25,8 +33,11 @@ jobs:
           channels: conda-forge
           channel-priority: strict
 
-      - name: install toolchain + boost.python
-        run: conda install -y libboost-python-devel clangxx_osx-64 ld64
+      - name: pin env to osx-64 + install toolchain + boost.python
+        run: |
+          conda config --env --set subdir osx-64
+          conda install -y libboost-python-devel clangxx_osx-64 ld64
+          conda info | grep -iE "platform|subdir" || true
 
       - name: report environment
         run: |
