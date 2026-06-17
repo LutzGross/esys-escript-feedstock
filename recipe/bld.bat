@@ -57,4 +57,3 @@ if errorlevel 1 exit /b 1
 
 xcopy /E /I /Y "%PREFIX%\esys" "%SP_DIR%\esys"
 if errorlevel 1 exit /b 1
-copy /y "%BUILD_PREFIX%\escript_build\scripts\release_sanity.py" "%TEMP%\release_sanity.py"

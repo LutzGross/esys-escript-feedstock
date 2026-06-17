@@ -35,8 +35,7 @@ requirements:
         - matplotlib-base
         - hdf5
         - libopenblas  # [unix]
-        - llvm-openmp  # [unix]
-        - openmp  # [win]
+        - llvm-openmp
         - scipy
         - sympy
         - libumfpack
@@ -45,21 +44,24 @@ requirements:
     run:
         - python
         - matplotlib-base
-        - llvm-openmp  # [unix]
-        - openmp  # [win]
+        - llvm-openmp
         - hdf5
         - scipy
         - sympy
         - gmsh  # [win]
         - setuptools  # [py>=312]
 test:
+    # Ship the upstream sanity script into the test workdir rather than copying
+    # it to /tmp from build.sh (keeps build/test phases encapsulated and the
+    # test runnable outside CI).
+    source_files:
+        - scripts/release_sanity.py
     commands:
         - run-escript -c
-        # Use the plain interpreter (not run-escript) so this guards the
-        # design goal: bare `import esys` must work without run-escript
-        # setting LD_LIBRARY_PATH/PYTHONPATH (relies on RPATH + site-packages).
-        - python /tmp/release_sanity.py  # [unix]
-        - python %TEMP%/release_sanity.py  # [win]
+        # Run with the plain interpreter (not run-escript): guards the design
+        # goal that bare `import esys` works without run-escript setting
+        # LD_LIBRARY_PATH/PYTHONPATH (relies on RPATH + site-packages).
+        - python scripts/release_sanity.py
 about:
     home: https://github.com/LutzGross/esys-escript.github.io
     summary: esys-escript is a programming tool for implementing mathematical
