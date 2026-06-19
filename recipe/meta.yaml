@@ -35,7 +35,8 @@ requirements:
         - matplotlib-base
         - hdf5
         - libopenblas  # [unix]
-        - llvm-openmp
+        - llvm-openmp  # [unix]
+        - openmp  # [win]
         - scipy
         - sympy
         - libumfpack
@@ -44,7 +45,8 @@ requirements:
     run:
         - python
         - matplotlib-base
-        - llvm-openmp
+        - llvm-openmp  # [unix]
+        - openmp  # [win]
         - hdf5
         - scipy
         - sympy
